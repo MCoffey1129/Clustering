@@ -1,5 +1,5 @@
 
-'''# Importing packages'''
+"""# Importing packages"""
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering
 
-'''# Import the penguin dataset'''
+"""# Import the penguin dataset"""
 penguins = sns.load_dataset("penguins")
 
 '''#Typical queries used to see what your data looks like'''
