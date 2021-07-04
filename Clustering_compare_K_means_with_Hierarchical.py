@@ -150,7 +150,8 @@ penguins_cluster.pivot_table(index=['species','kmeans_clus'], columns=['hierarch
                              , values='body_mass_g', aggfunc=len, fill_value=0)
 
 """As you can see clustering is not a technique for predicting a variable it is an approach from grouping
-   your features. For anyone who has completed the Andrew Ng course on Machine Learning he describes clustering
+   your features. Both approaches offer a different view on how the data can be grouped.
+   For anyone who has completed the Andrew Ng course on Machine Learning he describes clustering
    as more of an art than a science whereby you may have some prior reason or knowledge on the clusters e.g.
    you are looking to cluster sizes into small, medium and large in this case the above two approaches are 
    extremely useful"""
