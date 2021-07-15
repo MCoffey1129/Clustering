@@ -10,6 +10,8 @@ import seaborn as sns
 from sklearn.cluster import KMeans
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import MinMaxScaler
+
 
 """# Import the penguin dataset"""
 penguins = sns.load_dataset("penguins")
@@ -26,17 +28,22 @@ penguins.isnull().sum()
      look at what is the best way of dealing with Null values, in this scenario we will simply remove
      Null values"""
 
-penguins_red = penguins.dropna(subset=['bill_length_mm', 'bill_depth_mm'], how='any')
+"""Please note we should scale the data but given that bill_"""
 
-penguins_red.reset_index(inplace=True)
+penguins_na = penguins.dropna(subset=['bill_length_mm', 'bill_depth_mm']
+                                                                    , how='any')
 
+penguins_na = penguins_na.reset_index(drop=True)
 
+penguins_red = penguins_na[['bill_length_mm', 'bill_depth_mm']] # only bill length and bill depth
+
+print(penguins_red)
 
 """# Let us take a look at clustering bill_length_mm and bill_depth_mm together
    # Very important to visually see how many clusters it looks like the data could be split into
    # Looks likely to be 2-3 clusters"""
 sns.set()
-_ = sns.scatterplot(data=penguins, x='bill_length_mm', y='bill_depth_mm')
+_ = sns.scatterplot(data=penguins_na, x='bill_length_mm', y='bill_depth_mm')
 _ = plt.xlabel('Bill length (mm)')
 _ = plt.ylabel('Bill depth (mm)')
 _ = plt.title('Bill length v Bill depth', fontsize=20)
@@ -47,7 +54,7 @@ plt.plot()
     for each of the species"""
 #plt.clf()
 sns.set()
-_ = sns.scatterplot(data=penguins, x='bill_length_mm', y='bill_depth_mm', hue='species')
+_ = sns.scatterplot(data=penguins_na, x='bill_length_mm', y='bill_depth_mm', hue='species')
 _ = plt.xlabel('Bill length (mm)')
 _ = plt.ylabel('Bill depth (mm)')
 _ = plt.title('Bill length v Bill depth', fontsize=20)
@@ -55,8 +62,13 @@ plt.plot()
 
 
 """ # Penguins reduced dataset including only bill length and depth"""
-bill_dataset = penguins.iloc[:,2:4].values  #  2d array containing bill length and bill depth
+peng_red_np = penguins_red.values  #  2d array containing bill length and bill depth
 
+"""# Define the scaler and apply to the data - we will use the min max scaler"""
+scaler = MinMaxScaler()
+bill_dataset = scaler.fit_transform(peng_red_np)
+
+print(bill_dataset)
 
 ##############################################################################################################
                                         # K means
@@ -94,12 +106,12 @@ print(bill_kmeans)
     # Ward consists of minimising the variance within your clusters
     # The number of clusters equals the number of lines you cross at the largest Euclidean distance resulting
     # from adding a cluster
-    # Again 2,3 or 4 look like reasonable choices (2 offers the greatest increase in Euclidian distance but
-    # we will go with 3 as we want to compare against K means approach)
+    # Again 2 or 3 look like reasonable choices (3 offers the greatest increase in Euclidian distance so we
+    # will use 3)
     # The following KDnuggets page is extremely useful for understanding Hierarchical clustering 
     # https://www.kdnuggets.com/2019/09/hierarchical-clustering.html"""
 
-plt.clf()
+#plt.clf()
 dendrogram = sch.dendrogram(sch.linkage(bill_dataset, method = 'ward'))
 plt.title('Dendrogram')
 plt.xlabel('Bill info')
@@ -121,7 +133,7 @@ bill_hc_clusters = hc.fit_predict(bill_dataset)
 
 """# Include the clusters in our main dataset"""
 
-penguins_cluster = pd.concat([penguins_red
+penguins_cluster = pd.concat([penguins_na
                                  , pd.DataFrame(bill_kmeans,columns=['kmeans_clus'])
                                  ,pd.DataFrame(bill_hc_clusters, columns=['hierarch_clus'])], axis=1)
 
@@ -131,26 +143,28 @@ print(penguins_cluster)
 """ # Plot bill length and depth again except this time split the data by both sets of clusters"""
 
 # plt.clf()
-_ = sns.scatterplot(data=penguins_cluster, x='bill_length_mm', y='bill_depth_mm', hue= 'kmeans_clus')
-_ = plt.xlabel('Bill length (mm)')
-_ = plt.ylabel('Bill depth (mm)')
-_ = plt.title('Bill length v Bill depth', fontsize=20)
+plt.subplot(1,2,1)
+sns.scatterplot(data=penguins_cluster, x='bill_length_mm', y='bill_depth_mm', hue= 'kmeans_clus')
+plt.xlabel('Bill length (mm)')
+plt.ylabel('Bill depth (mm)')
+plt.title('Bill length v Bill depth', fontsize=20)
 plt.plot()
 
-_ = sns.scatterplot(data=penguins_cluster, x='bill_length_mm', y='bill_depth_mm', hue= 'hierarch_clus')
-_ = plt.xlabel('Bill length (mm)')
-_ = plt.ylabel('Bill depth (mm)')
-_ = plt.title('Bill length v Bill depth', fontsize=20)
+plt.subplot(1,2,2)
+sns.scatterplot(data=penguins_cluster, x='bill_length_mm', y='bill_depth_mm', hue= 'hierarch_clus')
+plt.xlabel('Bill length (mm)')
+plt.ylabel('Bill depth (mm)')
+plt.title('Bill length v Bill depth', fontsize=20)
 plt.plot()
 
 """# How close are the clusters to the species?
      Please note this is not the purpose of clustering!!"""
 
 penguins_cluster.pivot_table(index=['species','kmeans_clus'], columns=['hierarch_clus']
-                             , values='body_mass_g', aggfunc=len, fill_value=0)
+                             , values='sex', aggfunc=len, fill_value=0)
 
-"""As you can see clustering is not a technique for predicting a variable it is an approach from grouping
-   your features. Both approaches offer a different view on how the data can be grouped.
+"""As you can see clustering is not a technique for predicting a variable it is an approach for grouping
+   your features. Both approaches offer a quite similar view on how the data can be grouped.
    For anyone who has completed the Andrew Ng course on Machine Learning he describes clustering
    as more of an art than a science whereby you may have some prior reason or knowledge on the clusters e.g.
    you are looking to cluster sizes into small, medium and large in this case the above two approaches are 
